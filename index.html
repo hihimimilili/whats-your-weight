@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WHAT'S YOUR WEIGHT? - AI Fitness Coach v3.0</title>
+    <style>
+        :root {
+            --primary: #27ae60; --secondary: #2980b9; --accent: #8e44ad; --dark: #2c3e50; 
+            --light: #f8f9fa; --danger: #e74c3c; --success: #2ecc71; --warning: #f1c40f;
+        }
+        body { font-family: 'Inter', 'Segoe UI', sans-serif; background: #f0f2f5; color: var(--dark); margin: 0; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 40px auto; background: white; border-radius: 30px; box-shadow: 0 30px 100px rgba(0,0,0,0.1); overflow: hidden; }
+        
+        header { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; padding: 80px 20px; text-align: center; }
+        header h1 { margin: 0; font-size: 3.5rem; text-transform: uppercase; letter-spacing: 5px; font-weight: 900; text-shadow: 3px 3px 6px rgba(0,0,0,0.2); }
+        header p { font-size: 1.1rem; opacity: 0.9; margin-top: 10px; font-weight: 300; }
+        
+        main { padding: 40px 60px; }
+        .step { display: none; animation: fadeIn 0.6s ease; }
+        .step.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        h2 { color: var(--secondary); font-size: 1.8rem; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+
+        .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        label { display: block; font-weight: 700; margin-bottom: 8px; color: #444; font-size: 0.85rem; }
+        input, select { width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 1rem; transition: 0.3s; box-sizing: border-box; }
+        input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 12px rgba(39, 174, 96, 0.15); }
+
+        .card-selector { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 30px; }
+        .card-item { background: #f8f9fa; border: 2px solid #eee; padding: 15px 10px; border-radius: 15px; cursor: pointer; text-align: center; transition: 0.3s; font-weight: 600; font-size: 0.9rem; }
+        .card-item:hover { border-color: var(--primary); background: #fff; }
+        .card-item.selected { background: var(--primary); color: white; border-color: var(--primary); transform: scale(1.05); box-shadow: 0 8px 15px rgba(39,174,96,0.2); }
+        .card-item input { display: none; }
+
+        .btn-group { display: flex; gap: 20px; margin-top: 40px; }
+        button { padding: 18px 30px; border: none; border-radius: 50px; cursor: pointer; font-weight: 800; text-transform: uppercase; transition: 0.3s; }
+        .btn-next { background: var(--primary); color: white; flex-grow: 2; font-size: 1.1rem; }
+        .btn-next:hover { background: #219150; letter-spacing: 1px; }
+        .btn-back { background: #eee; color: #666; flex-grow: 1; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 25px; border-radius: 20px; text-align: center; border: 1px solid #eee; box-shadow: 0 10px 20px rgba(0,0,0,0.03); }
+        .stat-val { font-size: 3rem; font-weight: 900; color: var(--primary); display: block; }
+        
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
+        .video-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.08); text-decoration: none; color: inherit; transition: 0.3s; border: 1px solid #eee; }
+        .video-card:hover { transform: translateY(-8px); }
+        .thumb { height: 160px; background-size: cover; background-position: center; position: relative; }
+        .play-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(231,76,60,0.9); color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .video-info { padding: 15px; font-weight: 700; font-size: 0.95rem; }
+
+        .table-container { background: white; border-radius: 20px; overflow-x: auto; border: 1px solid #eee; margin: 30px 0; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { background: #f8f9fa; padding: 15px; text-align: left; }
+        td { padding: 15px; border-top: 1px solid #eee; }
+        .day-label { font-weight: 800; color: var(--primary); }
+
+        .section-title { margin-top: 50px; display: flex; align-items: center; gap: 10px; color: var(--dark); font-weight: 800; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>WHAT'S YOUR WEIGHT?</h1>
+        <p>Hệ thống lập trình vóc dáng AI v3.0 - Cá nhân hóa mục tiêu của bạn</p>
+    </header>
+
+    <main>
+        <!-- BƯỚC 1 -->
+        <div class="step active" id="s1">
+            <h2>1. Thông tin chỉ số cơ bản</h2>
+            <div class="grid-inputs">
+                <div><label>Giới tính</label><select id="gender"><option value="male">Nam giới</option><option value="female">Nữ giới</option></select></div>
+                <div><label>Tuổi</label><input type="number" id="age" value="25"></div>
+                <div><label>Chiều cao (cm)</label><input type="number" id="height" value="170"></div>
+                <div><label>Cân nặng (kg)</label><input type="number" id="weight" value="70"></div>
+            </div>
+            <div>
+                <label>Cường độ vận động</label>
+                <select id="activity">
+                    <option value="1.2">Không tập luyện (Văn phòng/Chỉ nằm/ngồi)</option>
+                    <option value="1.375">Vận động nhẹ (Thể dục 1-3 buổi/tuần)</option>
+                    <option value="1.55">Vận động vừa (Tập gym 3-5 buổi/tuần)</option>
+                    <option value="1.725">Vận động nặng (Tập luyện 6-7 buổi/tuần)</option>
+                    <option value="1.9">Cực nặng (Tập luyện cường độ cao 2 lần/ngày)</option>
+                </select>
+            </div>
+            <div class="btn-group"><button class="btn-next" onclick="go(1, 2)">Tiếp theo: Mục tiêu chi tiết</button></div>
+        </div>
+
+        <!-- BƯỚC 2 -->
+        <div class="step" id="s2">
+            <h2>2. Vùng cơ thể & Phương pháp tập</h2>
+            <div class="grid-inputs">
+                <div><label>Cân nặng mục tiêu (kg)</label><input type="number" id="targetW" value="65"></div>
+                <div><label>Thời gian (Tuần)</label><input type="number" id="duration" value="12"></div>
+            </div>
+
+            <label>Chọn các vùng cơ thể muốn tập trung:</label>
+            <div class="card-selector" id="focusArea">
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="abs">Cơ bụng / Eo</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="chest">Cơ ngực</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="back">Cơ lưng / Xô</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="shoulder">Vai thon / Rộng</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="arms">Bắp tay</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="glutes">Mông (Vòng 3)</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="thighs">Đùi trong / ngoài</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="calves">Bắp chân</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="collarbone">Xương quai xanh</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="fullbody">Toàn thân</div>
+            </div>
+
+            <label>Phương pháp luyện tập:</label>
+            <div class="card-selector" id="workoutType">
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="gym">Gym (Tạ/Máy)</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="calisthenics">Bodyweight</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="hiit">HIIT / Tabata</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="yoga">Yoga / Pilates</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="cardio">Chạy bộ / Đạp xe</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="dance">Nhảy / Zumba</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="office">Bài tập Văn phòng</div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-back" onclick="go(2, 1)">Quay lại</button>
+                <button class="btn-next" onclick="go(2, 3)">Tiếp theo: Dinh dưỡng</button>
+            </div>
+        </div>
+
+        <!-- BƯỚC 3 -->
+        <div class="step" id="s3">
+            <h2>3. Chế độ ăn uống & Lịch trình</h2>
+            <div class="grid-inputs">
+                <div>
+                    <label>Chế độ ăn mong muốn:</label>
+                    <select id="dietType">
+                        <option value="eatclean">Eat Clean (Sạch, ít chế biến)</option>
+                        <option value="balanced">Cân bằng truyền thống</option>
+                        <option value="keto">Keto (Nhiều béo, cực thấp Carb)</option>
+                        <option value="lowcarb">Low Carb (Hạn chế tinh bột)</option>
+                        <option value="intermittent">Nhịn ăn gián đoạn (16/8)</option>
+                        <option value="vegan">Thuần chay (Vegan)</option>
+                        <option value="mediterranean">Địa Trung Hải</option>
+                    </select>
+                </div>
+                <div><label>Số bữa ăn/ngày</label><input type="number" id="mealCount" value="3"></div>
+            </div>
+
+            <label>Lịch tập (Chọn những ngày bạn rảnh):</label>
+            <div class="card-selector" id="freeDays">
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="Thứ 2">T2</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="Thứ 3">T3</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="Thứ 4">T4</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="Thứ 5">T5</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="Thứ 6">T6</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="Thứ 7">T7</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="Chủ Nhật">CN</div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-back" onclick="go(3, 2)">Quay lại</button>
+                <button class="btn-next" onclick="finish()">TẠO LỘ TRÌNH NGAY</button>
+            </div>
+        </div>
+
+        <!-- BƯỚC 4 -->
+        <div class="step" id="s4">
+            <div id="finalOutput"></div>
+            <button class="btn-back" onclick="location.reload()" style="width:100%; margin-top:30px">Làm lại từ đầu</button>
+        </div>
+    </main>
+</div>
+
+<script>
+    function go(c, n) { 
+        document.getElementById('s'+c).classList.remove('active'); 
+        document.getElementById('s'+n).classList.add('active'); 
+        window.scrollTo(0,0); 
+    }
+    function sel(el) { 
+        el.classList.toggle('selected'); 
+        let cb = el.querySelector('input'); 
+        cb.checked = !cb.checked; 
+    }
+
+    const videoDatabase = {
+        abs: [
+            {id:'ml6cT4AZdqI', t:'10 Phút Cơ Bụng Số 11'}, {id:'2MoGxae-zyo', t:'Bụng Dưới Thần Tốc'}, 
+            {id:'9pP6u_6-P_M', t:'Six Pack Abs Workout'}, {id:'AnYl6Nk9GOA', t:'Abs in 2 Weeks'}
+        ],
+        chest: [
+            {id:'lWXhih3xbKc', t:'Bài tập Ngực tại nhà'}, {id:'vthMCtgVtFw', t:'Chest Workout for Mass'},
+            {id:'Z9P8m4C_P_8', t:'Upper Chest Focus'}
+        ],
+        back: [
+            {id:'hbdS-D_pYFk', t:'Lưng Xô V-Taper'}, {id:'EGoV_P_8M_U', t:'Hết gù lưng hiệu quả'}
+        ],
+        glutes: [
+            {id:'U9ENCvRPHKw', t:'Mông quả đào không to đùi'}, {id:'v7AYKMP6rOE', t:'Glute Pump Workout'}
+        ],
+        hiit: [
+            {id:'ml6cT4AZdqI', t:'Tabata 4 phút cực căng'}, {id:'P_8M_UnYl6N', t:'15 Min HIIT'}
+        ],
+        yoga: [
+            {id:'Nnd5Slo02us', t:'Yoga cho người mới'}, {id:'v7AYKMP6rOE', t:'Pilates Sculpt'}
+        ],
+        collarbone: [
+            {id:'mG_O_1v7L_I', t:'Xương quai xanh quyến rũ'}, {id:'p7G_gBshK80', t:'Massage cổ và vai'}
+        ],
+        fullbody: [
+            {id:'jy0O6_ByMUI', t:'Đốt mỡ toàn thân 20p'}, {id:'ml6cT4AZdqI', t:'Full Body HIIT'}
+        ]
+    };
+
+    const menus = {
+        eatclean: [
+            "Sáng: Khoai lang + 2 Trứng luộc; Trưa: Ức gà áp chảo + Bông cải; Tối: Cá hồi + Salad",
+            "Sáng: Yến mạch; Trưa: Bún lứt bò; Tối: Đậu hũ sốt cà + Canh bí",
+            "Sáng: Sinh tố chuối; Trưa: Cơm lứt + Tôm rim; Tối: Gà luộc + Rau củ",
+            "Sáng: Bánh mì đen trứng; Trưa: Salad cá ngừ; Tối: Thịt heo nạc + Canh cải",
+            "Sáng: Trứng cuộn rau; Trưa: Miến gà; Tối: Cá thu + Súp lơ",
+            "Sáng: Khoai tây hấp; Trưa: Bò xào; Tối: Tôm hấp + Salad",
+            "Sáng: Ngũ cốc; Trưa: Lẩu nấm; Tối: Súp gà"
+        ]
+    };
+
+    function finish() {
+        const w = parseFloat(document.getElementById('weight').value);
+        const h = parseFloat(document.getElementById('height').value);
+        const targetW = parseFloat(document.getElementById('targetW').value);
+        const age = parseInt(document.getElementById('age').value);
+        const act = parseFloat(document.getElementById('activity').value);
+        const diet = document.getElementById('dietType').value;
+        const duration = parseInt(document.getElementById('duration').value);
+
+        const bmi = (w / ((h/100)*(h/100))).toFixed(1);
+        let bmr = (10 * w) + (6.25 * h) - (5 * age);
+        bmr = (document.getElementById('gender').value === 'male') ? bmr + 5 : bmr - 161;
+        const tdee = Math.round(bmr * act);
+        const deficit = ((w - targetW) * 7700) / (duration * 7);
+        let goalC = Math.round(tdee - deficit);
+        if(goalC < 1200) goalC = 1200;
+
+        const fDays = Array.from(document.querySelectorAll('#freeDays .selected')).map(e => e.querySelector('input').value);
+        const fAreas = Array.from(document.querySelectorAll('#focusArea .selected')).map(e => e.querySelector('input').value);
+        const wTypes = Array.from(document.querySelectorAll('#workoutType .selected')).map(e => e.querySelector('input').value);
+
+        let html = `
+            <h2 style="color:var(--primary)">KẾT QUẢ DÀNH CHO BẠN</h2>
+            <div class="stat-grid">
+                <div class="stat-card"><span>BMI Hiện tại</span><span class="stat-val">${bmi}</span></div>
+                <div class="stat-card"><span>Calo mục tiêu</span><span class="stat-val">${goalC}</span><p>kcal/ngày</p></div>
+                <div class="stat-card"><span>Cần giảm</span><span class="stat-val" style="color:var(--danger)">${(w-targetW).toFixed(1)}</span><p>kg trong ${duration} tuần</p></div>
+            </div>
+
+            <h3 class="section-title">🍽️ Thực đơn gợi ý (${diet.toUpperCase()})</h3>
+            <div class="table-container">
+                <table>
+                    <tr><th>Thứ</th><th>Bữa ăn tiêu biểu</th></tr>
+                    ${["Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ Nhật"].map((day, i) => `
+                        <tr><td class="day-label">${day}</td><td>${(menus[diet] && menus[diet][i]) || "Thực đơn Healthy: Ưu tiên Đạm + Chất xơ"}</td></tr>
+                    `).join('')}
+                </table>
+            </div>
+
+            <h3 class="section-title">🎬 Video hướng dẫn theo mục tiêu</h3>
+            <div class="video-grid">
+        `;
+
+        const allKeys = [...fAreas, ...wTypes];
+        const addedV = new Set();
+        allKeys.forEach(k => {
+            if(videoDatabase[k]) {
+                videoDatabase[k].forEach(v => {
+                    if(!addedV.has(v.id)) {
+                        html += `
+                            <a href="https://www.youtube.com/watch?v=${v.id}" target="_blank" class="video-card">
+                                <div class="thumb" style="background-image: url('https://img.youtube.com/vi/${v.id}/mqdefault.jpg')">
+                                    <div class="play-btn">▶</div>
+                                </div>
+                                <div class="video-info">${v.t}</div>
+                            </a>
+                        `;
+                        addedV.add(v.id);
+                    }
+                });
+            }
+        });
+
+        html += `</div>`;
+        document.getElementById('finalOutput').innerHTML = html;
+        go(3, 4);
+    }
+</script>
+
+</body>
+</html>
