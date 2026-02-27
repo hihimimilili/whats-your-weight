@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WHAT'S YOUR WEIGHT? - AI Fitness Coach v3.0</title>
+    <style>
+        :root {
+            --primary: #27ae60; --secondary: #2980b9; --accent: #8e44ad; --dark: #2c3e50; 
+            --light: #f8f9fa; --danger: #e74c3c; --success: #2ecc71; --warning: #f1c40f;
+        }
+        body { font-family: 'Inter', 'Segoe UI', sans-serif; background: #f0f2f5; color: var(--dark); margin: 0; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 40px auto; background: white; border-radius: 30px; box-shadow: 0 30px 100px rgba(0,0,0,0.1); overflow: hidden; }
+        
+        header { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; padding: 80px 20px; text-align: center; }
+        header h1 { margin: 0; font-size: 3.5rem; text-transform: uppercase; letter-spacing: 5px; font-weight: 900; text-shadow: 3px 3px 6px rgba(0,0,0,0.2); }
+        header p { font-size: 1.1rem; opacity: 0.9; margin-top: 10px; font-weight: 300; }
+        
+        main { padding: 40px 60px; }
+        .step { display: none; animation: fadeIn 0.6s ease; }
+        .step.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        h2 { color: var(--secondary); font-size: 1.8rem; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+
+        .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        label { display: block; font-weight: 700; margin-bottom: 8px; color: #444; font-size: 0.85rem; }
+        input, select { width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 1rem; transition: 0.3s; box-sizing: border-box; }
+        input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 12px rgba(39, 174, 96, 0.15); }
+
+        .card-selector { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 30px; }
+        .card-item { background: #f8f9fa; border: 2px solid #eee; padding: 15px 10px; border-radius: 15px; cursor: pointer; text-align: center; transition: 0.3s; font-weight: 600; font-size: 0.9rem; }
+        .card-item:hover { border-color: var(--primary); background: #fff; }
+        .card-item.selected { background: var(--primary); color: white; border-color: var(--primary); transform: scale(1.05); box-shadow: 0 8px 15px rgba(39,174,96,0.2); }
+        .card-item input { display: none; }
+
+        .btn-group { display: flex; gap: 20px; margin-top: 40px; }
+        button { padding: 18px 30px; border: none; border-radius: 50px; cursor: pointer; font-weight: 800; text-transform: uppercase; transition: 0.3s; }
+        .btn-next { background: var(--primary); color: white; flex-grow: 2; font-size: 1.1rem; }
+        .btn-next:hover { background: #219150; letter-spacing: 1px; }
+        .btn-back { background: #eee; color: #666; flex-grow: 1; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 25px; border-radius: 20px; text-align: center; border: 1px solid #eee; box-shadow: 0 10px 20px rgba(0,0,0,0.03); }
+        .stat-val { font-size: 3rem; font-weight: 900; color: var(--primary); display: block; }
+        
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
+        .video-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.08); text-decoration: none; color: inherit; transition: 0.3s; border: 1px solid #eee; }
+        .video-card:hover { transform: translateY(-8px); }
+        .thumb { height: 160px; background-size: cover; background-position: center; position: relative; }
+        .play-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(231,76,60,0.9); color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .video-info { padding: 15px; font-weight: 700; font-size: 0.95rem; }
+
+        .table-container { background: white; border-radius: 20px; overflow-x: auto; border: 1px solid #eee; margin: 30px 0; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { background: #f8f9fa; padding: 15px; text-align: left; }
+        td { padding: 15px; border-top: 1px solid #eee; }
+        .day-label { font-weight: 800; color: var(--primary); }
+
+        .section-title { margin-top: 50px; display: flex; align-items: center; gap: 10px; color: var(--dark); font-weight: 800; text-transform: uppercase; }
+
+        #welcome-view {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover; background-position: center;
+            z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center;
+        }
+        #welcome-view h1 { font-size: 4rem; letter-spacing: 10px; margin-bottom: 10px; }
+        .meal-box { margin-bottom: 5px; font-size: 0.9rem; }
+        .meal-tag { color: var(--primary); font-weight: bold; margin-right: 5px; }
+    </style>
+</head>
+<body>
+
+<div id="welcome-view">
+    <h1 style="font-weight: 900;">WHAT'S YOUR WEIGHT?</h1>
+    <p style="font-size: 1.5rem; max-width: 600px; margin-bottom: 30px;">Hệ thống AI kiến tạo vóc dáng lý tưởng dành riêng cho bạn.</p>
+    <button class="btn-next" style="max-width: 300px;" onclick="document.getElementById('welcome-view').style.display='none'">BẮT ĐẦU NGAY</button>
+</div>
+
+<div class="container">
+    <header>
+        <h1>WHAT'S YOUR WEIGHT?</h1>
+        <p>Hệ thống lập trình vóc dáng AI v3.0 - Cá nhân hóa mục tiêu của bạn</p>
+    </header>
+
+    <main>
+        <div class="step active" id="s1">
+            <h2>1. Thông tin chỉ số cơ bản</h2>
+            <div class="grid-inputs">
+                <div><label>Giới tính</label><select id="gender"><option value="male">Nam giới</option><option value="female">Nữ giới</option></select></div>
+                <div><label>Tuổi</label><input type="number" id="age" value="25"></div>
+                <div><label>Chiều cao (cm)</label><input type="number" id="height" value="170"></div>
+                <div><label>Cân nặng (kg)</label><input type="number" id="weight" value="70"></div>
+            </div>
+            <div>
+                <label>Cường độ vận động</label>
+                <select id="activity">
+                    <option value="1.2">Không tập luyện (Văn phòng/Chỉ nằm/ngồi)</option>
+                    <option value="1.375">Vận động nhẹ (Thể dục 1-3 buổi/tuần)</option>
+                    <option value="1.55">Vận động vừa (Tập gym 3-5 buổi/tuần)</option>
+                    <option value="1.725">Vận động nặng (Tập luyện 6-7 buổi/tuần)</option>
+                    <option value="1.9">Cực nặng (Tập luyện cường độ cao 2 lần/ngày)</option>
+                </select>
+            </div>
+            <div class="btn-group"><button class="btn-next" onclick="go(1, 2)">Tiếp theo: Mục tiêu chi tiết</button></div>
+        </div>
+
+        <div class="step" id="s2">
+            <h2>2. Vùng cơ thể & Phương pháp tập</h2>
+            <div class="grid-inputs">
+                <div><label>Cân nặng mục tiêu (kg)</label><input type="number" id="targetW" value="65"></div>
+                <div><label>Thời gian (Tuần)</label><input type="number" id="duration" value="12"></div>
+            </div>
+
+            <label>Chọn các vùng cơ thể muốn tập trung:</label>
+            <div class="card-selector" id="focusArea">
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="abs">Cơ bụng / Eo</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="chest">Cơ ngực</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="back">Cơ lưng / Xô</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="shoulder">Vai thon / Rộng</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="arms">Bắp tay</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="glutes">Mông (Vòng 3)</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="thighs">Đùi trong / ngoài</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="calves">Bắp chân</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="collarbone">Xương quai xanh</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="fullbody">Toàn thân</div>
+            </div>
+
+            <label>Phương pháp luyện tập:</label>
+            <div class="card-selector" id="workoutType">
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="gym">Gym (Tạ/Máy)</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="calisthenics">Bodyweight</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="hiit">HIIT / Tabata</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="yoga">Yoga / Pilates</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="cardio">Chạy bộ / Đạp xe</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="dance">Nhảy / Zumba</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="office">Bài tập Văn phòng</div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-back" onclick="go(2, 1)">Quay lại</button>
+                <button class="btn-next" onclick="go(2, 3)">Tiếp theo: Dinh dưỡng</button>
+            </div>
+        </div>
+
+        <div class="step" id="s3">
+            <h2>3. Chế độ ăn uống & Lịch trình</h2>
+            <div class="grid-inputs">
+                <div>
+                    <label>Chế độ ăn mong muốn:</label>
+                    <select id="dietType">
+                        <option value="eatclean">Eat Clean (Sạch, ít chế biến)</option>
+                        <option value="balanced">Cân bằng truyền thống</option>
+                        <option value="keto">Keto (Nhiều béo, cực thấp Carb)</option>
+                        <option value="lowcarb">Low Carb (Hạn chế tinh bột)</option>
+                        <option value="intermittent">Nhịn ăn gián đoạn (16/8)</option>
+                        <option value="vegan">Thuần chay (Vegan)</option>
+                        <option value="mediterranean">Địa Trung Hải</option>
+                    </select>
+                </div>
+                <div><label>Số bữa ăn/ngày</label><input type="number" id="mealCount" value="3"></div>
+            </div>
+
+            <label>Lịch tập (Chọn những ngày bạn rảnh):</label>
+            <div class="card-selector" id="freeDays">
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="Thứ 2">T2</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="Thứ 3">T3</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="Thứ 4">T4</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="Thứ 5">T5</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="Thứ 6">T6</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="Thứ 7">T7</div>
+                <div class="card-item" onclick="sel(this)"><input type="checkbox" value="Chủ Nhật">CN</div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-back" onclick="go(3, 2)">Quay lại</button>
+                <button class="btn-next" onclick="finish()">TẠO LỘ TRÌNH NGAY</button>
+            </div>
+        </div>
+
+        <div class="step" id="s4">
+            <div id="finalOutput"></div>
+            <button class="btn-back" onclick="location.reload()" style="width:100%; margin-top:30px">Làm lại từ đầu</button>
+        </div>
+    </main>
+</div>
+
+<script>
+    function go(c, n) { 
+        document.getElementById('s'+c).classList.remove('active'); 
+        document.getElementById('s'+n).classList.add('active'); 
+        window.scrollTo(0,0); 
+    }
+    function sel(el) { 
+        el.classList.toggle('selected'); 
+        let cb = el.querySelector('input'); 
+        cb.checked = !cb.checked; 
+    }
+
+    const videoDatabase = {
+        abs: [{id:'ml6cT4AZdqI', t:'10 Phút Cơ Bụng Số 11'}, {id:'2MoGxae-zyo', t:'Bụng Dưới Thần Tốc'}],
+        chest: [{id:'lWXhih3xbKc', t:'Bài tập Ngực tại nhà'}, {id:'vthMCtgVtFw', t:'Chest Workout for Mass'}],
+        back: [{id:'hbdS-D_pYFk', t:'Lưng Xô V-Taper'}, {id:'EGoV_P_8M_U', t:'Hết gù lưng hiệu quả'}],
+        glutes: [{id:'U9ENCvRPHKw', t:'Mông quả đào không to đùi'}],
+        hiit: [{id:'ml6cT4AZdqI', t:'Tabata 4 phút cực căng'}],
+        yoga: [{id:'Nnd5Slo02us', t:'Yoga cho người mới'}],
+        fullbody: [{id:'jy0O6_ByMUI', t:'Đốt mỡ toàn thân 20p'}]
+    };
+
+    const menus = {
+        eatclean: [
+            {s: "Yến mạch, chuối, hạt chia", t: "Ức gà áp chảo, cơm lứt, súp lơ", o: "Cá hồi nướng, salad rau bina"},
+            {s: "Sinh tố bơ, trứng luộc", t: "Thịt bò xào rau củ, bún lứt", o: "Tôm hấp, canh cải xanh"},
+            {s: "Sữa chua Hy Lạp, dâu tây", t: "Cá thu nướng, khoai lang hấp", o: "Gà luộc xé phay, salad dưa chuột"},
+            {s: "Bánh mì đen, trứng ốp la", t: "Mực xào hành cần, cơm lứt", o: "Đậu hũ sốt cà chua, canh bí"},
+            {s: "Khoai lang luộc, sữa hạt", t: "Thịt heo nạc luộc, bí ngòi", o: "Cá phi lê áp chảo, măng tây"},
+            {s: "Pancake yến mạch, mật ong", t: "Tôm rim mặn ngọt, cơm lứt", o: "Súp gà ngô non, nấm"},
+            {s: "Ngũ cốc nguyên cám, táo", t: "Lẩu nấm rau củ, bún lứt", o: "Cháo yến mạch thịt băm"}
+        ],
+        balanced: [
+            {s: "Phở bò, rau sống", t: "Cơm trắng, thịt kho tàu, canh rau", o: "Bún chả Hà Nội, rau thơm"},
+            {s: "Bánh mì kẹp trứng, pate", t: "Cơm, gà rang gừng, canh bí đỏ", o: "Cá rán, rau muống luộc"},
+            {s: "Bún riêu cua, bắp chuối", t: "Cơm, sườn xào chua ngọt, rau cải", o: "Thịt luộc, đậu rán, canh chua"},
+            {s: "Xôi xéo, ruốc, hành phi", t: "Cơm, tôm rim, canh mồng tơi", o: "Mì xào bò, rau cải"},
+            {s: "Hủ tiếu Nam Vang", t: "Cơm, thịt heo kho măng, rau sống", o: "Phở gà, quẩy"},
+            {s: "Bánh cuốn thanh trì, chả", t: "Cơm, cá thu sốt cà, canh rau ngót", o: "Nộm gà xé phay, cháo thịt"},
+            {s: "Bún bò Huế", t: "Cơm gia đình, thức ăn tổng hợp", o: "Miến gà, rau thơm"}
+        ],
+        keto: [
+            {s: "Trứng xào bơ, ba chỉ hun khói", t: "Đùi gà chiên bơ, măng tây", o: "Cá hồi áp chảo phô mai"},
+            {s: "Omelet 3 trứng, xúc xích", t: "Bò bit tết, súp lơ trắng xào", o: "Thịt ba chỉ luộc, salad mayonnaise"},
+            {s: "Cà phê bơ (Bulletproof)", t: "Tôm xào tỏi, cải bó xôi", o: "Sườn nướng, bông cải xanh"},
+            {s: "Salad trứng, quả bơ, hạt hạnh nhân", t: "Gà nướng da giòn, rau xà lách", o: "Mực hấp, sốt chấm béo"},
+            {s: "Trứng luộc, phô mai miếng", t: "Thịt bò cuộn nấm kim châm", o: "Cá thu chiên mỡ lợn"},
+            {s: "Sữa hạnh nhân không đường", t: "Giò heo hầm súp lơ", o: "Thịt heo quay, dưa chuột"},
+            {s: "Trứng hấp thịt băm", t: "Lẩu thái Keto (nhiều đạm/béo)", o: "Thịt nướng, salad quả bơ"}
+        ],
+        lowcarb: [
+            {s: "2 trứng luộc, 1 quả táo", t: "Ức gà áp chảo, salad thập cẩm", o: "Thịt bò băm, canh rau cải"},
+            {s: "Sữa chua không đường, hạt hạnh nhân", t: "Tôm xào nấm, bông cải trắng", o: "Cá phi lê nướng, rau mầm"},
+            {s: "Bánh mì đen (1 lát), trứng", t: "Thịt heo luộc, đậu bắp", o: "Gà xào sả ớt, canh bí"},
+            {s: "Trứng cuộn rau củ", t: "Mực hấp hành tím, xà lách", o: "Cá hồi nướng muối tiêu"},
+            {s: "Sinh tố protein, dâu tây", t: "Bò xào thiên lý, canh rong biển", o: "Tôm nướng, salad dầu giấm"},
+            {s: "Khoai lang nhỏ (1 củ), trứng", t: "Thịt gà kho gừng, rau luộc", o: "Đậu phụ luộc, thịt nạc"},
+            {s: "Sữa hạt, hạt điều", t: "Canh xương hầm rau củ", o: "Salad cá ngừ, trứng"}
+        ],
+        vegan: [
+            {s: "Bánh mì nguyên cám, bơ đậu phộng", t: "Đậu hũ kho nấm, cơm lứt", o: "Canh rong biển, đậu phụ trắng"},
+            {s: "Yến mạch sữa đậu nành", t: "Bún xào rau củ, lạc rang", o: "Salad đậu Hà Lan, bắp ngọt"},
+            {s: "Khoai lang luộc, sữa hạt", t: "Mì lứt sốt cà chua nấm", o: "Gỏi cuốn rau củ, đậu hũ"},
+            {s: "Sinh tố bơ, chuối", t: "Cơm lứt, mít non kho", o: "Súp bí đỏ, hạt bí"},
+            {s: "Bún xào nghệ chay", t: "Đậu ve xào nấm, canh chua chay", o: "Chả giò chay, rau sống"},
+            {s: "Hạt hạnh nhân, quả táo", t: "Miến xào mộc nhĩ, rau cải", o: "Đậu hũ sốt me, cơm lứt"},
+            {s: "Phở chay, nấm, đậu phụ", t: "Lẩu nấm thập cẩm", o: "Cháo đậu xanh, nấm"}
+        ],
+        mediterranean: [
+            {s: "Sữa chua, mật ong, hạt óc chó", t: "Cá nướng, salad Hy Lạp", o: "Pasta ngũ cốc nguyên hạt, tôm"},
+            {s: "Trứng ốp la, dầu oliu, cà chua", t: "Gà nướng chanh, bánh mì nguyên cám", o: "Salad cá ngừ, oliu, đậu nành"},
+            {s: "Ngũ cốc táo, sữa ít béo", t: "Cơm cá hồi, rau mầm", o: "Súp đậu lăng, bánh mì"},
+            {s: "Trái cây khô, hạt điều", t: "Mực nướng, salad cam, rau xanh", o: "Gà hầm rau củ kiểu Địa Trung Hải"},
+            {s: "Bánh mì đen kẹp bơ, trứng", t: "Pasta tôm sốt tỏi dầu oliu", o: "Cá thu nướng măng tây"},
+            {s: "Sinh tố dâu, chuối, sữa hạt", t: "Tôm nướng muối, rau củ trộn", o: "Đậu trắng hầm, rau xanh"},
+            {s: "Trứng chần, bánh mì, oliu", t: "Cơm hải sản Địa Trung Hải", o: "Cá nướng, khoai tây nhỏ"}
+        ],
+        intermittent: [
+            {s: "Nhịn (Giai đoạn Fasting)", t: "Cơm lứt, thịt heo nạc, rau", o: "Ức gà, khoai lang, xà lách"},
+            {s: "Nhịn (Giai đoạn Fasting)", t: "Phở bò, trái cây", o: "Cá nướng, bông cải, cơm"},
+            {s: "Nhịn (Giai đoạn Fasting)", t: "Bún thịt nướng, rau sống", o: "Tôm rim, súp lơ, cơm lứt"},
+            {s: "Nhịn (Giai đoạn Fasting)", t: "Mì xào bò, sinh tố bơ", o: "Gà nướng, salad, đậu hũ"},
+            {s: "Nhịn (Giai đoạn Fasting)", t: "Cơm, cá kho, canh rau", o: "Thịt luộc, trứng, rau mầm"},
+            {s: "Nhịn (Giai đoạn Fasting)", t: "Bún cá, trái cây tươi", o: "Hải sản hấp, rau xanh"},
+            {s: "Nhịn (Giai đoạn Fasting)", t: "Lẩu gia đình", o: "Cháo thịt băm, yến mạch"}
+        ]
+    };
+
+    function finish() {
+        const w = parseFloat(document.getElementById('weight').value);
+        const h = parseFloat(document.getElementById('height').value);
+        const targetW = parseFloat(document.getElementById('targetW').value);
+        const age = parseInt(document.getElementById('age').value);
+        const act = parseFloat(document.getElementById('activity').value);
+        const diet = document.getElementById('dietType').value;
+        const duration = parseInt(document.getElementById('duration').value);
+
+        const bmi = (w / ((h/100)*(h/100))).toFixed(1);
+        let bmr = (10 * w) + (6.25 * h) - (5 * age);
+        bmr = (document.getElementById('gender').value === 'male') ? bmr + 5 : bmr - 161;
+        const tdee = Math.round(bmr * act);
+        const deficit = ((w - targetW) * 7700) / (duration * 7);
+        let goalC = Math.round(tdee - deficit);
+        if(goalC < 1200) goalC = 1200;
+
+        const fAreas = Array.from(document.querySelectorAll('#focusArea .selected')).map(e => e.querySelector('input').value);
+        const wTypes = Array.from(document.querySelectorAll('#workoutType .selected')).map(e => e.querySelector('input').value);
+
+        let html = `
+            <h2 style="color:var(--primary)">KẾT QUẢ DÀNH CHO BẠN</h2>
+            <div class="stat-grid">
+                <div class="stat-card"><span>BMI Hiện tại</span><span class="stat-val">${bmi}</span></div>
+                <div class="stat-card"><span>Calo mục tiêu</span><span class="stat-val">${goalC}</span><p>kcal/ngày</p></div>
+                <div class="stat-card"><span>Cần giảm</span><span class="stat-val" style="color:var(--danger)">${(w-targetW).toFixed(1)}</span><p>kg trong ${duration} tuần</p></div>
+            </div>
+
+            <h3 class="section-title">🍽️ Thực đơn chi tiết 7 ngày (${diet.toUpperCase()})</h3>
+            <div class="table-container">
+                <table>
+                    <tr><th>Thứ</th><th>Gợi ý bữa ăn tiêu biểu</th></tr>
+                    ${["Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ Nhật"].map((day, i) => {
+                        const dayMenu = menus[diet][i];
+                        return `
+                        <tr>
+                            <td class="day-label">${day}</td>
+                            <td>
+                                <div class="meal-box"><span class="meal-tag">Sáng:</span> ${dayMenu.s}</div>
+                                <div class="meal-box"><span class="meal-tag">Trưa:</span> ${dayMenu.t}</div>
+                                <div class="meal-box"><span class="meal-tag">Tối:</span> ${dayMenu.o}</div>
+                            </td>
+                        </tr>`;
+                    }).join('')}
+                </table>
+            </div>
+
+            <h3 class="section-title">🎬 Video hướng dẫn theo mục tiêu</h3>
+            <div class="video-grid">
+        `;
+
+        const allKeys = [...fAreas, ...wTypes];
+        const addedV = new Set();
+        allKeys.forEach(k => {
+            if(videoDatabase[k]) {
+                videoDatabase[k].forEach(v => {
+                    if(!addedV.has(v.id)) {
+                        html += `
+                            <a href="https://www.youtube.com/watch?v=${v.id}" target="_blank" class="video-card">
+                                <div class="thumb" style="background-image: url('https://img.youtube.com/vi/${v.id}/mqdefault.jpg')">
+                                    <div class="play-btn">▶</div>
+                                </div>
+                                <div class="video-info">${v.t}</div>
+                            </a>
+                        `;
+                        addedV.add(v.id);
+                    }
+                });
+            }
+        });
+
+        html += `</div>`;
+        document.getElementById('finalOutput').innerHTML = html;
+        go(3, 4);
+    }
+</script>
+
+</body>
+</html>
